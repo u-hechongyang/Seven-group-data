@@ -1,0 +1,27 @@
+分析链家网的url，基本格式是
+城市拼音 + ".lianjia.com"
+整个爬虫最外层遍历一个保存城市简单拼音的列表，拼接得到一个个起始URL
+一、基础
+1、def get_list_page_url(city):
+https://{city}.lianjia.com/ershoufang/ ---------> https://dg.lianjia.com/ershoufang/pg{index}/
+先确定起始页：start_url   --------->  然后获得每个city页面之后剩下的每个页面
+2、def get_detail_page_url(page_url):
+在进入到具体城市的每一页的url中，获取30个具体房源信息的url，通过PyQuery，detail_url = child_item.attr("href")
+在每一个li的具体标签中获得
+3、进入具体页面后
+通过PyQuery库提取我们需要的信息
+
+二、至此，我们爬取的步骤已经结束，但是我们为了提高爬取的速度，采用多线程的方式
+这里采用第三方库 ThreadPool来实现多线程，使用
+from concurrent.futures import ThreadPoolExecutor
+通过构造函数新建了线程池对象，最大可并发线程数指定为30，如不指定，其默认是CPU数的5倍
+p = ThreadPoolExecutor(30)
+for page_url in page_url_list:
+    p.submit(get_detail_page_url, page_url).add_done_callback(detail_page_parser)
+依次把爬取的任务提交到线程池中，并设置回调函数，这里的回调函数拿到的是一包含get_detail_page_url返回的对象
+并把这个对象作为回调函数的参数res，先把返回的res得到一个结果，即在前面加上一个res.result(),这个结果就是get_detail_page_url
+的返回值
+
+三、IP代理池，由于爬取的数量巨大，同时多线程提高了速度，链家网会拒绝访问，这时可以通过代理IP的方式来访问
+
+四、数据存储
