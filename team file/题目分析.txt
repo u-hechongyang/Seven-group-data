@@ -1,0 +1,169 @@
+
+数据分析：利用数据对模型参数的估计，通过参数化后的模型描述数据的内在关系，从而对未来进行预测
+
+模型选取：某个模型在某个问题下，可能解释能力优于其他模型，
+	从几个备选模型中，按照某种评价标准，选择出一个较为合理的一个模型
+
+评价标准：一个合理的模型一方面可以拟合原始数据，另一方面又应该可以以高准确率进行预测。
+回归算法的评价指标是：那么回归算法的评价指标就是MSE，RMSE，MAE、R-Squared
+参考：https://www.jianshu.com/p/9ee85fdad150
+
+训练集与测试集的划分：交叉验证（K折交叉验证）
+
+
+房价预测（回归类问题）
+（一）多变量线性回归
+1、划定问题：监督学习任务（一系列房子的数据------->每个样本正确的价格），多变量的回归（区别于分类，通常用来分析预测一个值）问题
+
+2、利用损失函数来评估模型的好坏
+损失函数最小——>模型的预测结果越好
+如何求损失函数的最小值（求出模型的参数）
+（1）梯度下降算法（特征缩放、学习率的选取）
+（2） 公式法：θ=(X^T X)^(-1) X^T y （特征之间不独立，矩阵不可逆）
+（大量的特征值的时候，使用梯度下降算法，少量特征值时，使用公式法）
+
+3、利用正则化，防止过拟合的情况
+通过正则化惩罚项人为的修改已有的损失函数，比如使用L1、L2正则添加到loss func里面去
+使用lasso回归和岭回归
+
+4、如何划分训练集与测试集
+交叉验证：K折交叉验证
+
+5、线性回归的局限性
+对特征与回归目标之间进行了线性假设，局限了其应用范围
+现实生活中的许多实例数据的各个特征与回归目标之间，绝大多数不能保证严格的线性关系
+
+6、扩展
+可以使用SVM、K近邻、决策树算法进行预测
+
+使用回归树对房价的预测效果应该会更好一点，对比线性回归器（LinearRegression、SGDRegressor）
+原因：特征与目标值之间存在一定的非线性关系
+树模型的优点：
+树模型可以解决非线性特征的问题、不要求对特征标准化和统一量化
+缺点：
+搭建模型过于复杂，丧失泛化能力、稳定性较差、无法在有限时间内找到最优解
+
+GradientBoostingRegressor
+ExtraTreesRegressor
+RandomForestRegressor
+
+随机森林模型的变种：极端随机森林（Extremely Randomized Trees）
+在当构建一棵树的分裂节点的时候，不会任意的选取特征，而是先随机收集一部分特征，然后利用信息熵和基尼不纯性
+等指标挑选最佳的节点特征
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+获得数据——>划分训练集和测试集——>对数据标准化处理——>使用线性模型和随机梯度下降模型进行训练数据，并进行预测——>使用评价机制对模型性能进行评估
+
+1、划分数据集：
+import numpy as np
+from sklearn.model_selection import train_test_split
+X，y
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=33)
+
+2、对数据标准化处理：
+# 从sklearn.preprocessing导入数据标准化模块。
+from sklearn.preprocessing import StandardScaler
+# 分别初始化对特征和目标值的标准化器。
+ss_X = StandardScaler()
+ss_y = StandardScaler()
+# 分别对训练和测试数据的特征以及目标值进行标准化处理。
+X_train = ss_X.fit_transform(X_train)
+X_test = ss_X.transform(X_test)
+y_train = ss_y.fit_transform(y_train)
+y_test = ss_y.transform(y_test)
+
+为什么对数据进行标准化处理：
+特征的量纲和数值得量级是不一样的，那么对房价的影响程度也是不一样的
+通过标准化的处理，在使用梯度下降的情况下，不同特征对参数的影响程度就一样了。
+即：当原始数据不同维度上的特征的尺度（单位）不一致时，需要标准化步骤对数据进行预处理。
+
+3、使用模型训练
+线性模型
+# 从sklearn.linear_model导入LinearRegression。
+from sklearn.linear_model import LinearRegression
+
+# 使用默认配置初始化线性回归器LinearRegression。
+lr = LinearRegression()
+# 使用训练数据进行参数估计。
+lr.fit(X_train, y_train)
+# 对测试数据进行回归预测。
+lr_y_predict = lr.predict(X_test)
+
+随机梯度下降模型
+# 从sklearn.linear_model导入SGDRegressor。
+from sklearn.linear_model import SGDRegressor
+
+# 使用默认配置初始化线性回归器SGDRegressor。
+sgdr = SGDRegressor()
+# 使用训练数据进行参数估计。
+sgdr.fit(X_train, y_train)
+# 对测试数据进行回归预测。
+sgdr_y_predict = sgdr.predict(X_test)
+
+4、使用评价机制读模型性能进行评估
+# 使用LinearRegression模型自带的评估模块，并输出评估结果。
+print 'The value of default measurement of LinearRegression is', lr.score(X_test, y_test)
+
+# 从sklearn.metrics依次导入r2_score、mean_squared_error以及mean_absoluate_error用于回归性能的评估。
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+
+# 使用r2_score模块，并输出评估结果。
+print 'The value of R-squared of LinearRegression is', r2_score(y_test, lr_y_predict)
+
+# 使用mean_squared_error模块，并输出评估结果。
+print 'The mean squared error of LinearRegression is', mean_squared_error(ss_y.inverse_transform(y_test), ss_y.inverse_transform(lr_y_predict))
+
+# 使用mean_absolute_error模块，并输出评估结果。
+print 'The mean absoluate error of LinearRegression is', mean_absolute_error(ss_y.inverse_transform(y_test), ss_y.inverse_transform(lr_y_predict))
+
+# 使用SGDRegressor模型自带的评估模块，并输出评估结果。
+print 'The value of default measurement of SGDRegressor is', sgdr.score(X_test, y_test)
+
+# 使用r2_score模块，并输出评估结果。
+print 'The value of R-squared of SGDRegressor is', r2_score(y_test, sgdr_y_predict)
+
+# 使用mean_squared_error模块，并输出评估结果。
+print 'The mean squared error of SGDRegressor is', mean_squared_error(ss_y.inverse_transform(y_test), ss_y.inverse_transform(sgdr_y_predict))
+
+# 使用mean_absolute_error模块，并输出评估结果。
+print 'The mean absoluate error of SGDRegressor is', mean_absolute_error(ss_y.inverse_transform(y_test), ss_y.inverse_transform(sgdr_y_predict))
+
+
+
+
+
+
+
+
+分类与回归的本质区别：
+（https://blog.csdn.net/wspba/article/details/61927105）
+1.回归问题的应用场景
+回归问题通常是用来预测一个值，如预测房价、未来的天气情况等等，例如一个产品的实际价格为500元，通过回归分析预测值为499元，我们认为这是一个比较好的回归分析。
+一个比较常见的回归算法是线性回归算法（LR）。
+另外，回归分析用在神经网络上，其最上层是不需要加上softmax函数的，而是直接对前一层累加即可。回归是对真实值的一种逼近预测。
+
+2.分类问题的应用场景
+分类问题是用于将事物打上一个标签，通常结果为离散值。
+例如判断一幅图片上的动物是一只猫还是一只狗，分类通常是建立在回归之上，分类的最后一层通常要使用softmax函数进行判断其所属类别。
+分类并没有逼近的概念，最终正确结果只有一个，错误的就是错误的，不会有相近的概念。最常见的分类方法是逻辑回归，或者叫逻辑分类。
+
+岭回归、lasso回归的使用范围
+岭回归通过缩减系数来“理解”数据，适用于特征数量多于样本数量的数据
+lasso回归能够使得损失函数中的许多θ均变成0，这点要优于岭回归，因为岭回归是要所有的θ均存在的，这样计算量Lasso回归将远远小于岭回归
+
+3、什么是支持向量机
+根据训练样本的分布，搜索所有可能的线性分类器中最佳的那一个
